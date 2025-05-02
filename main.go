@@ -102,6 +102,11 @@ func deployCommand() *cobra.Command {
 			r := rand.New(rand.NewSource(99))
 			env = append(env, fmt.Sprintf("RANDOM=%d", r.Uint32()))
 
+			// if env does not contains DOCKER_REGISTRY, then set it to "docker.io"
+			if _, ok := os.LookupEnv("DOCKER_REGISTRY"); !ok {
+				env = append(env, "DOCKER_REGISTRY=docker.io")
+			}
+
 			// Set the DOCKER_STACK_NAMESPACE environment variable
 			env = append(env, fmt.Sprintf("DOCKER_STACK_NAMESPACE=%s", namespace))
 
