@@ -1,0 +1,6 @@
+services:
+  nginx:
+    image: nginx
+    environment:
+      - DOCKER_STACK_NAMESPACE=${DOCKER_STACK_NAMESPACE}
+      - RANDOM=${RANDOM}
