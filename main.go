@@ -122,6 +122,8 @@ func deployCommand() *cobra.Command {
 				Stderr: os.Stderr,
 			}
 
+			fmt.Printf("Deploying stack to namespace: %s\n", namespace)
+
 			return command.Run()
 		},
 	}
