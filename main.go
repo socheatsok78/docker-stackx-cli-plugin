@@ -40,6 +40,8 @@ func run() error {
 		},
 	}
 
+	addCommands(cmd)
+
 	cli, err := command.NewDockerCli()
 	if err != nil {
 		return fmt.Errorf("failed to create docker cli: %w", err)
@@ -50,4 +52,22 @@ func run() error {
 		Vendor:        Vendor,
 		Version:       Version,
 	})
+}
+
+func addCommands(cmd *cobra.Command) {
+	cmd.AddCommand(
+		deployCommand(),
+	)
+}
+
+func deployCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "deploy",
+		Short: "Deploy a stack",
+		Long:  "Deploy a stack to the Docker Swarm cluster",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			fmt.Println("Deploying stack...")
+			return nil
+		},
+	}
 }
