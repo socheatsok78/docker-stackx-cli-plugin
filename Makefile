@@ -1,4 +1,7 @@
 it: build install
 
 build:
-	go build -o ${HOME}/.docker/cli-plugins/docker-stackx .
+	go build -o bin/docker-stackx .
+
+install:
+	install -Dm755 bin/docker-stackx ${HOME}/.docker/cli-plugins/docker-stackx

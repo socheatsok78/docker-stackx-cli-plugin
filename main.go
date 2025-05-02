@@ -18,6 +18,8 @@ var (
 	Vendor  = "github.com/socheatsok78/docker-stackx-cli-plugin"
 )
 
+var env = os.Environ()
+
 func main() {
 	if err := run(); err != nil {
 		_, _ = fmt.Fprintln(os.Stderr, err)
@@ -58,16 +60,89 @@ func run() error {
 
 func addCommands(cmd *cobra.Command) {
 	cmd.AddCommand(
+		configCommand(),
 		deployCommand(),
 	)
+}
+func configCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "config",
+		Short: "Outputs the final config file, after doing merges and interpolations",
+		Args:  cobra.RangeArgs(0, 1),
+		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+			// Set the default namespace to "default" if no argument is provided
+			// or if the argument is empty
+			namespace := "default"
+			if len(args) > 0 {
+				namespace = args[0]
+			}
+
+			// Generate a random number for the RANDOM environment variable
+			r := rand.New(rand.NewSource(99))
+			env = append(env, fmt.Sprintf("RANDOM=%d", r.Uint32()))
+
+			// if env does not contains DOCKER_REGISTRY, then set it to "docker.io"
+			if _, ok := os.LookupEnv("DOCKER_REGISTRY"); !ok {
+				env = append(env, "DOCKER_REGISTRY=docker.io")
+			}
+
+			// Set the DOCKER_STACK_NAMESPACE environment variable
+			env = append(env, fmt.Sprintf("DOCKER_STACK_NAMESPACE=%s", namespace))
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			// Prepare the command to execute
+			execArgv := []string{"docker", "stack", "config"}
+			if composeFile, err := cmd.Flags().GetString("compose-file"); err == nil {
+				execArgv = append(execArgv, "--compose-file="+composeFile)
+			}
+			if skipInterpolation, err := cmd.Flags().GetBool("skip-interpolation"); err == nil {
+				execArgv = append(execArgv, "--skip-interpolation="+fmt.Sprintf("%t", skipInterpolation))
+			}
+
+			command := exec.Cmd{
+				Path:   "/usr/local/bin/docker",
+				Args:   execArgv,
+				Env:    env,
+				Stdin:  os.Stdin,
+				Stdout: os.Stdout,
+				Stderr: os.Stderr,
+			}
+
+			return command.Run()
+		},
+	}
+
+	cmd.Flags().StringP("compose-file", "c", "docker-stack.yml", "Path to a Compose file, or \"-\" to read from stdin")
+	cmd.Flags().Bool("skip-interpolation", false, "Skip interpolation and output only merged config")
+
+	return cmd
 }
 
 func deployCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "deploy",
-		Short: "Deploy a stack",
-		Long:  "Deploy a stack to the Docker Swarm cluster",
+		Short: "Deploy a new stack or update an existing stack",
 		Args:  cobra.RangeArgs(0, 1),
+		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+			// Set the default namespace to "default" if no argument is provided
+			// or if the argument is empty
+			namespace := "default"
+			if len(args) > 0 {
+				namespace = args[0]
+			}
+
+			// Generate a random number for the RANDOM environment variable
+			r := rand.New(rand.NewSource(99))
+			env = append(env, fmt.Sprintf("RANDOM=%d", r.Uint32()))
+
+			// if env does not contains DOCKER_REGISTRY, then set it to "docker.io"
+			if _, ok := os.LookupEnv("DOCKER_REGISTRY"); !ok {
+				env = append(env, "DOCKER_REGISTRY=docker.io")
+			}
+
+			// Set the DOCKER_STACK_NAMESPACE environment variable
+			env = append(env, fmt.Sprintf("DOCKER_STACK_NAMESPACE=%s", namespace))
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Set the default namespace to "default" if no argument is provided
 			// or if the argument is empty
@@ -97,21 +172,6 @@ func deployCommand() *cobra.Command {
 				execArgv = append(execArgv, "--with-registry-auth="+fmt.Sprintf("%t", withRegistryAuth))
 			}
 			execArgv = append(execArgv, namespace)
-
-			// Prepare the environment variables
-			env := os.Environ()
-
-			// Generate a random number for the RANDOM environment variable
-			r := rand.New(rand.NewSource(99))
-			env = append(env, fmt.Sprintf("RANDOM=%d", r.Uint32()))
-
-			// if env does not contains DOCKER_REGISTRY, then set it to "docker.io"
-			if _, ok := os.LookupEnv("DOCKER_REGISTRY"); !ok {
-				env = append(env, "DOCKER_REGISTRY=docker.io")
-			}
-
-			// Set the DOCKER_STACK_NAMESPACE environment variable
-			env = append(env, fmt.Sprintf("DOCKER_STACK_NAMESPACE=%s", namespace))
 
 			command := exec.Cmd{
 				Path:   "/usr/local/bin/docker",
