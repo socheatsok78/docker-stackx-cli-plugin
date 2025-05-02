@@ -162,8 +162,8 @@ func deployCommand() *cobra.Command {
 			if prune, err := cmd.Flags().GetBool("prune"); err == nil {
 				execArgv = append(execArgv, "--prune="+fmt.Sprintf("%t", prune))
 			}
-			if quiet, err := cmd.Flags().GetString("quiet"); err == nil {
-				execArgv = append(execArgv, "--quiet="+quiet)
+			if quiet, err := cmd.Flags().GetBool("quiet"); err == nil {
+				execArgv = append(execArgv, "--quiet="+fmt.Sprintf("%t", quiet))
 			}
 			if resolveImage, err := cmd.Flags().GetString("resolve-image"); err == nil {
 				execArgv = append(execArgv, "--resolve-image="+resolveImage)
@@ -182,7 +182,11 @@ func deployCommand() *cobra.Command {
 				Stderr: os.Stderr,
 			}
 
-			fmt.Printf("Deploying stack to namespace: %s\n", namespace)
+			if quiet, err := cmd.Flags().GetBool("quiet"); err == nil {
+				if !quiet {
+					fmt.Printf("Deploying stack to namespace: %s\n", namespace)
+				}
+			}
 
 			return command.Run()
 		},
