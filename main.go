@@ -182,6 +182,9 @@ func deployCommand() *cobra.Command {
 			}
 			execArgv = append(execArgv, namespace)
 
+			// TODO: Check if network marked as external exists, if not create it with the same name and make it attachable
+			// TODO: Check if volume marked as external exists, if not create it with the same name
+
 			command := exec.Cmd{
 				Path:   defaultDockerCliPath,
 				Args:   execArgv,
