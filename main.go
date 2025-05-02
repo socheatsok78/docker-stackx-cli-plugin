@@ -67,11 +67,14 @@ func deployCommand() *cobra.Command {
 		Use:   "deploy",
 		Short: "Deploy a stack",
 		Long:  "Deploy a stack to the Docker Swarm cluster",
-		Args:  cli.ExactArgs(1),
+		Args:  cobra.RangeArgs(0, 1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			env := os.Environ()
 
-			namespace := args[0]
+			namespace := "default"
+			if len(args) > 0 {
+				namespace = args[0]
+			}
 
 			// Prepare the command to execute
 			execArgv := []string{"docker", "stack", "deploy"}
@@ -106,6 +109,7 @@ func deployCommand() *cobra.Command {
 				Path:   "/usr/local/bin/docker",
 				Args:   execArgv,
 				Env:    env,
+				Stdin:  os.Stdin,
 				Stdout: os.Stdout,
 				Stderr: os.Stderr,
 			}
