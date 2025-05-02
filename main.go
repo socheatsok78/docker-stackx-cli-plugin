@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/docker/cli/cli"
 	"github.com/docker/cli/cli-plugins/metadata"
 	"github.com/docker/cli/cli-plugins/plugin"
 	"github.com/docker/cli/cli/command"
@@ -28,7 +29,14 @@ func run() error {
 		Short: "Docker Stack Extended",
 		Long:  "Extended Docker Stack CLI plugin",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return nil
+			if len(args) == 0 {
+				return cmd.Help()
+			}
+			_ = cmd.Help()
+			return cli.StatusError{
+				StatusCode: 1,
+				Status:     fmt.Sprintf("ERROR: unknown command: %q", args[0]),
+			}
 		},
 	}
 
