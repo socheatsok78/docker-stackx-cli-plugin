@@ -69,8 +69,8 @@ func deployCommand() *cobra.Command {
 		Long:  "Deploy a stack to the Docker Swarm cluster",
 		Args:  cobra.RangeArgs(0, 1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			env := os.Environ()
-
+			// Set the default namespace to "default" if no argument is provided
+			// or if the argument is empty
 			namespace := "default"
 			if len(args) > 0 {
 				namespace = args[0]
@@ -97,6 +97,9 @@ func deployCommand() *cobra.Command {
 				execArgv = append(execArgv, "--with-registry-auth="+fmt.Sprintf("%t", withRegistryAuth))
 			}
 			execArgv = append(execArgv, namespace)
+
+			// Prepare the environment variables
+			env := os.Environ()
 
 			// Generate a random number for the RANDOM environment variable
 			r := rand.New(rand.NewSource(99))
