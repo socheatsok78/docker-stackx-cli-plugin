@@ -10,7 +10,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var Version = "0.1.0"
+var (
+	Version = "0.1.0"
+	Vendor  = "github.com/socheatsok78/docker-stackx-cli-plugin"
+)
 
 func main() {
 	if err := run(); err != nil {
@@ -36,7 +39,7 @@ func run() error {
 
 	return plugin.RunPlugin(cli, cmd, metadata.Metadata{
 		SchemaVersion: "0.1.0",
-		Vendor:        "Docker Inc.",
+		Vendor:        Vendor,
 		Version:       Version,
 	})
 }
