@@ -18,7 +18,19 @@ var (
 	Vendor  = "github.com/socheatsok78/docker-stackx-cli-plugin"
 )
 
-var env = os.Environ()
+var (
+	defaultDockerCliPath = "/usr/local/bin/docker"
+	env                  = os.Environ()
+)
+
+func init() {
+	dockerCliLookPath, err := exec.LookPath("docker")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "docker not found in PATH: %v\n", err)
+		os.Exit(1)
+	}
+	defaultDockerCliPath = dockerCliLookPath
+}
 
 func main() {
 	if err := run(); err != nil {
@@ -44,7 +56,10 @@ func run() error {
 		},
 	}
 
-	addCommands(cmd)
+	cmd.AddCommand(
+		configCommand(),
+		deployCommand(),
+	)
 
 	cli, err := command.NewDockerCli()
 	if err != nil {
@@ -58,12 +73,6 @@ func run() error {
 	})
 }
 
-func addCommands(cmd *cobra.Command) {
-	cmd.AddCommand(
-		configCommand(),
-		deployCommand(),
-	)
-}
 func configCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "config",
@@ -100,7 +109,7 @@ func configCommand() *cobra.Command {
 			}
 
 			command := exec.Cmd{
-				Path:   "/usr/local/bin/docker",
+				Path:   defaultDockerCliPath,
 				Args:   execArgv,
 				Env:    env,
 				Stdin:  os.Stdin,
@@ -174,7 +183,7 @@ func deployCommand() *cobra.Command {
 			execArgv = append(execArgv, namespace)
 
 			command := exec.Cmd{
-				Path:   "/usr/local/bin/docker",
+				Path:   defaultDockerCliPath,
 				Args:   execArgv,
 				Env:    env,
 				Stdin:  os.Stdin,
