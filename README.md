@@ -16,3 +16,19 @@ Commands:
 
 Run 'docker stackx COMMAND --help' for more information on a command.
 ```
+
+## Example
+
+The following environment variables will always available when using the command provided by this plugin:
+- `DOCKER_REGISTRY`: The Docker registry to use for the images (default: `docker.io`).
+- `DOCKER_STACK_NAMESPACE`: The namespace to use for the stack (default: `default`).
+- `RANDOM`: A random number to use for the stack.
+
+```yml
+services:
+  nginx:
+    image: ${DOCKER_REGISTRY}/nginx
+    environment:
+      - DOCKER_STACK_NAMESPACE=${DOCKER_STACK_NAMESPACE}
+      - RANDOM=${RANDOM}
+```
