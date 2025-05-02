@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"os/exec"
 
 	"github.com/docker/cli/cli"
 	"github.com/docker/cli/cli-plugins/metadata"
@@ -61,13 +62,59 @@ func addCommands(cmd *cobra.Command) {
 }
 
 func deployCommand() *cobra.Command {
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "deploy",
 		Short: "Deploy a stack",
 		Long:  "Deploy a stack to the Docker Swarm cluster",
+		Args:  cli.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			fmt.Println("Deploying stack...")
-			return nil
+			env := os.Environ()
+
+			namespace := args[0]
+
+			// Prepare the command to execute
+			execArgv := []string{"docker", "stack", "deploy"}
+			if composeFile, err := cmd.Flags().GetString("compose-file"); err == nil {
+				execArgv = append(execArgv, "--compose-file="+composeFile)
+			}
+			if detach, err := cmd.Flags().GetBool("detach"); err == nil {
+				execArgv = append(execArgv, "--detach="+fmt.Sprintf("%t", detach))
+			}
+			if prune, err := cmd.Flags().GetBool("prune"); err == nil {
+				execArgv = append(execArgv, "--prune="+fmt.Sprintf("%t", prune))
+			}
+			if quiet, err := cmd.Flags().GetString("quiet"); err == nil {
+				execArgv = append(execArgv, "--quiet="+quiet)
+			}
+			if resolveImage, err := cmd.Flags().GetString("resolve-image"); err == nil {
+				execArgv = append(execArgv, "--resolve-image="+resolveImage)
+			}
+			if withRegistryAuth, err := cmd.Flags().GetBool("with-registry-auth"); err == nil {
+				execArgv = append(execArgv, "--with-registry-auth="+fmt.Sprintf("%t", withRegistryAuth))
+			}
+			execArgv = append(execArgv, namespace)
+
+			// Set the DOCKER_STACK_NAMESPACE environment variable
+			env = append(env, fmt.Sprintf("DOCKER_STACK_NAMESPACE=%s", namespace))
+
+			command := exec.Cmd{
+				Path:   "/usr/local/bin/docker",
+				Args:   execArgv,
+				Env:    env,
+				Stdout: os.Stdout,
+				Stderr: os.Stderr,
+			}
+
+			return command.Run()
 		},
 	}
+
+	cmd.Flags().StringP("compose-file", "c", "docker-stack.yml", "Path to a Compose file, or \"-\" to read from stdin")
+	cmd.Flags().BoolP("detach", "d", true, "Exit immediately instead of waiting for the stack services to converge")
+	cmd.Flags().Bool("prune", false, "Prune services that are no longer referenced")
+	cmd.Flags().BoolP("quiet", "q", false, "Suppress progress output")
+	cmd.Flags().String("resolve-image", "always", "Query the registry to resolve image digest and supported platforms (\"always\", \"changed\", \"never\")")
+	cmd.Flags().Bool("with-registry-auth", false, "Send registry authentication details to Swarm agents")
+
+	return cmd
 }
