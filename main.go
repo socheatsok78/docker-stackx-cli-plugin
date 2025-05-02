@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
 	"os"
 	"os/exec"
 
@@ -93,6 +94,10 @@ func deployCommand() *cobra.Command {
 				execArgv = append(execArgv, "--with-registry-auth="+fmt.Sprintf("%t", withRegistryAuth))
 			}
 			execArgv = append(execArgv, namespace)
+
+			// Generate a random number for the RANDOM environment variable
+			r := rand.New(rand.NewSource(99))
+			env = append(env, fmt.Sprintf("RANDOM=%d", r.Uint32()))
 
 			// Set the DOCKER_STACK_NAMESPACE environment variable
 			env = append(env, fmt.Sprintf("DOCKER_STACK_NAMESPACE=%s", namespace))
