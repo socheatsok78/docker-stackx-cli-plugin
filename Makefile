@@ -1,17 +1,16 @@
+GOOS ?= $(shell go env GOOS)
+GOARCH ?= $(shell go env GOARCH)
+
 it: build install
 
 clean:
-	rm -rf bin || true
+	rm -rf dist || true
 
 build:
-	go build -o bin/docker-stackx .
+	GOOS=$(GOOS) GOARCH=$(GOARCH) goreleaser build --snapshot --clean --single-target
 
 install:
-	install -Dm755 bin/docker-stackx ${HOME}/.docker/cli-plugins/docker-stackx
+	install -Dm755 dist/docker-stackx-cli-plugin_$(GOOS)_$(GOARCH)_v8.0/docker-stackx-cli-plugin ${HOME}/.docker/cli-plugins/docker-stackx
 
 cross-binaries: clean
-	for os in darwin linux; do \
-		for arch in amd64 arm64; do \
-			GOOS=$$os GOARCH=$$arch go build -o bin/docker-stackx-$$os-$$arch .; \
-		done; \
-	done
+	goreleaser release --snapshot --clean
