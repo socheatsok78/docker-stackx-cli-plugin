@@ -1,5 +1,8 @@
-it: build install
+it: tidy build install
 
+tidy:
+	go mod tidy
+	go mod vendor
 clean:
 	rm -rf bin || true
 
