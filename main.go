@@ -19,8 +19,14 @@ var (
 )
 
 var (
-	defaultDockerCliPath = "/usr/local/bin/docker"
 	env                  = os.Environ()
+	defaultDockerCliPath = "/usr/local/bin/docker"
+
+	// Default values for environment variables
+	defaultDockerRegistryUrlKey    = "DOCKER_REGISTRY_URL"
+	defaultDockerRegistryUrl       = "docker.io"
+	defaultDockerStackNamespaceKey = "DOCKER_STACK_NAMESPACE"
+	defaultDockerStackNamespace    = "default"
 )
 
 func init() {
@@ -81,7 +87,7 @@ func configCommand() *cobra.Command {
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			// Set the default namespace to "default" if no argument is provided
 			// or if the argument is empty
-			namespace := "default"
+			namespace := defaultDockerStackNamespace
 			if len(args) > 0 {
 				namespace = args[0]
 			}
@@ -91,12 +97,12 @@ func configCommand() *cobra.Command {
 			env = append(env, fmt.Sprintf("RANDOM=%d", r.Uint32()))
 
 			// if env does not contains DOCKER_REGISTRY, then set it to "docker.io"
-			if _, ok := os.LookupEnv("DOCKER_REGISTRY"); !ok {
-				env = append(env, "DOCKER_REGISTRY=docker.io")
+			if _, ok := os.LookupEnv(defaultDockerRegistryUrlKey); !ok {
+				env = append(env, fmt.Sprintf("%s=%s", defaultDockerRegistryUrlKey, defaultDockerRegistryUrl))
 			}
 
 			// Set the DOCKER_STACK_NAMESPACE environment variable
-			env = append(env, fmt.Sprintf("DOCKER_STACK_NAMESPACE=%s", namespace))
+			env = append(env, fmt.Sprintf("%s=%s", defaultDockerStackNamespaceKey, namespace))
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Prepare the command to execute
@@ -135,7 +141,7 @@ func deployCommand() *cobra.Command {
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			// Set the default namespace to "default" if no argument is provided
 			// or if the argument is empty
-			namespace := "default"
+			namespace := defaultDockerStackNamespace
 			if len(args) > 0 {
 				namespace = args[0]
 			}
