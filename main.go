@@ -107,9 +107,13 @@ func configCommand() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Prepare the command to execute
 			execArgv := []string{"docker", "stack", "config"}
-			if composeFile, err := cmd.Flags().GetString("compose-file"); err == nil {
-				execArgv = append(execArgv, "--compose-file="+composeFile)
+
+			if composeFiles, err := cmd.Flags().GetStringSlice("compose-file"); err == nil {
+				for _, file := range composeFiles {
+					execArgv = append(execArgv, "--compose-file="+file)
+				}
 			}
+
 			if skipInterpolation, err := cmd.Flags().GetBool("skip-interpolation"); err == nil {
 				execArgv = append(execArgv, "--skip-interpolation="+fmt.Sprintf("%t", skipInterpolation))
 			}
@@ -127,7 +131,7 @@ func configCommand() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringP("compose-file", "c", "docker-stack.yml", "Path to a Compose file, or \"-\" to read from stdin")
+	cmd.Flags().StringSliceP("compose-file", "c", []string{"docker-stack.yml"}, "Path to a Compose file, or \"-\" to read from stdin")
 	cmd.Flags().Bool("skip-interpolation", false, "Skip interpolation and output only merged config")
 
 	return cmd
@@ -168,28 +172,37 @@ func deployCommand() *cobra.Command {
 
 			// Prepare the command to execute
 			execArgv := []string{"docker", "stack", "deploy"}
-			if composeFile, err := cmd.Flags().GetString("compose-file"); err == nil {
-				execArgv = append(execArgv, "--compose-file="+composeFile)
+
+			if composeFiles, err := cmd.Flags().GetStringSlice("compose-file"); err == nil {
+				for _, file := range composeFiles {
+					execArgv = append(execArgv, "--compose-file="+file)
+				}
 			}
+
 			if detach, err := cmd.Flags().GetBool("detach"); err == nil {
 				execArgv = append(execArgv, "--detach="+fmt.Sprintf("%t", detach))
 			}
+
 			if prune, err := cmd.Flags().GetBool("prune"); err == nil {
 				execArgv = append(execArgv, "--prune="+fmt.Sprintf("%t", prune))
 			}
+
 			if quiet, err := cmd.Flags().GetBool("quiet"); err == nil {
 				execArgv = append(execArgv, "--quiet="+fmt.Sprintf("%t", quiet))
 			}
+
 			if resolveImage, err := cmd.Flags().GetString("resolve-image"); err == nil {
 				execArgv = append(execArgv, "--resolve-image="+resolveImage)
 			}
+
 			if withRegistryAuth, err := cmd.Flags().GetBool("with-registry-auth"); err == nil {
 				execArgv = append(execArgv, "--with-registry-auth="+fmt.Sprintf("%t", withRegistryAuth))
 			}
-			execArgv = append(execArgv, namespace)
 
 			// TODO: Check if network marked as external exists, if not create it with the same name and make it attachable
 			// TODO: Check if volume marked as external exists, if not create it with the same name
+
+			execArgv = append(execArgv, namespace)
 
 			command := exec.Cmd{
 				Path:   defaultDockerCliPath,
@@ -210,7 +223,7 @@ func deployCommand() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringP("compose-file", "c", "docker-stack.yml", "Path to a Compose file, or \"-\" to read from stdin")
+	cmd.Flags().StringSliceP("compose-file", "c", []string{"docker-stack.yml"}, "Path to a Compose file, or \"-\" to read from stdin")
 	cmd.Flags().BoolP("detach", "d", true, "Exit immediately instead of waiting for the stack services to converge")
 	cmd.Flags().Bool("prune", false, "Prune services that are no longer referenced")
 	cmd.Flags().BoolP("quiet", "q", false, "Suppress progress output")
