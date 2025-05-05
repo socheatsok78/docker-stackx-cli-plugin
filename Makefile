@@ -3,6 +3,9 @@ GOARCH ?= $(shell go env GOARCH)
 
 it: build install
 
+tidy:
+	go mod tidy
+	go mod vendor
 clean:
 	rm -rf dist || true
 

@@ -1,6 +1,6 @@
 services:
   nginx:
-    image: ${DOCKER_REGISTRY}/nginx
+    image: ${DOCKER_REGISTRY_URL}/nginx
     environment:
       - DOCKER_STACK_NAMESPACE=${DOCKER_STACK_NAMESPACE}
       - RANDOM=${RANDOM}
