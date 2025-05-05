@@ -84,7 +84,7 @@ func configCommand() *cobra.Command {
 		Use:   "config",
 		Short: "Outputs the final config file, after doing merges and interpolations",
 		Args:  cobra.RangeArgs(0, 1),
-		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			// Set the default namespace to "default" if no argument is provided
 			// or if the argument is empty
 			namespace := defaultDockerStackNamespace
@@ -92,19 +92,9 @@ func configCommand() *cobra.Command {
 				namespace = args[0]
 			}
 
-			// Generate a random number for the RANDOM environment variable
-			r := rand.New(rand.NewSource(99))
-			env = append(env, fmt.Sprintf("RANDOM=%d", r.Uint32()))
+			// Extend the environment variables for the stack
+			env = extendStackEnv(namespace, env)
 
-			// if env does not contains DOCKER_REGISTRY, then set it to "docker.io"
-			if _, ok := os.LookupEnv(defaultDockerRegistryUrlKey); !ok {
-				env = append(env, fmt.Sprintf("%s=%s", defaultDockerRegistryUrlKey, defaultDockerRegistryUrl))
-			}
-
-			// Set the DOCKER_STACK_NAMESPACE environment variable
-			env = append(env, fmt.Sprintf("%s=%s", defaultDockerStackNamespaceKey, namespace))
-		},
-		RunE: func(cmd *cobra.Command, args []string) error {
 			// Prepare the command to execute
 			execArgv := []string{"docker", "stack", "config"}
 
@@ -142,7 +132,7 @@ func deployCommand() *cobra.Command {
 		Use:   "deploy",
 		Short: "Deploy a new stack or update an existing stack",
 		Args:  cobra.RangeArgs(0, 1),
-		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			// Set the default namespace to "default" if no argument is provided
 			// or if the argument is empty
 			namespace := defaultDockerStackNamespace
@@ -150,25 +140,8 @@ func deployCommand() *cobra.Command {
 				namespace = args[0]
 			}
 
-			// Generate a random number for the RANDOM environment variable
-			r := rand.New(rand.NewSource(99))
-			env = append(env, fmt.Sprintf("RANDOM=%d", r.Uint32()))
-
-			// if env does not contains DOCKER_REGISTRY, then set it to "docker.io"
-			if _, ok := os.LookupEnv("DOCKER_REGISTRY"); !ok {
-				env = append(env, "DOCKER_REGISTRY=docker.io")
-			}
-
-			// Set the DOCKER_STACK_NAMESPACE environment variable
-			env = append(env, fmt.Sprintf("DOCKER_STACK_NAMESPACE=%s", namespace))
-		},
-		RunE: func(cmd *cobra.Command, args []string) error {
-			// Set the default namespace to "default" if no argument is provided
-			// or if the argument is empty
-			namespace := "default"
-			if len(args) > 0 {
-				namespace = args[0]
-			}
+			// Extend the environment variables for the stack
+			env = extendStackEnv(namespace, env)
 
 			// Prepare the command to execute
 			execArgv := []string{"docker", "stack", "deploy"}
@@ -231,4 +204,20 @@ func deployCommand() *cobra.Command {
 	cmd.Flags().Bool("with-registry-auth", false, "Send registry authentication details to Swarm agents")
 
 	return cmd
+}
+
+func extendStackEnv(namespace string, env []string) []string {
+	// Generate a random number for the RANDOM environment variable
+	r := rand.New(rand.NewSource(99))
+	env = append(env, fmt.Sprintf("RANDOM=%d", r.Uint32()))
+
+	// if env does not contains DOCKER_REGISTRY, then set it to "docker.io"
+	if _, ok := os.LookupEnv(defaultDockerRegistryUrlKey); !ok {
+		env = append(env, fmt.Sprintf("%s=%s", defaultDockerRegistryUrlKey, defaultDockerRegistryUrl))
+	}
+
+	// Set the DOCKER_STACK_NAMESPACE environment variable
+	env = append(env, fmt.Sprintf("%s=%s", defaultDockerStackNamespaceKey, namespace))
+
+	return env
 }
